@@ -1,22 +1,22 @@
 # MCP Trace Lab
 
-> A local-first flight recorder and analyzer for Model Context Protocol (MCP) stdio traffic.  
-> 面向 Model Context Protocol（MCP）stdio 流量的本地优先记录与分析工具。
+> Record and inspect Model Context Protocol (MCP) stdio traffic.  
+> 记录和分析 Model Context Protocol（MCP）的 stdio 通信。
 
-MCP Trace Lab runs between an MCP client and a stdio server. It forwards the original byte stream, records redacted JSON-RPC events as JSONL, and correlates requests with responses for deterministic inspection.
+MCP Trace Lab runs between an MCP client and a stdio server. It forwards the original byte stream, records redacted JSON-RPC events as JSONL, and correlates requests with responses to show tool calls, errors, and response times.
 
-MCP Trace Lab 运行在 MCP 客户端与 stdio 服务端之间。它会转发原始字节流，将脱敏后的 JSON-RPC 事件记录为 JSONL，并关联请求与响应，生成可重复分析的摘要。
+MCP Trace Lab 运行在 MCP 客户端与 stdio 服务端之间。它会转发原始字节流，将脱敏后的 JSON-RPC 事件记录为 JSONL，并关联请求与响应，统计工具调用、错误和响应耗时。
 
-> **Project status / 项目状态:** `v0.1.0` MVP. The CLI and trace format may evolve before the first stable release.  
-> `v0.1.0` MVP 阶段；首个稳定版本前，CLI 与追踪格式可能调整。
+> **Project status / 项目状态:** `v0.1.0`, experimental. The CLI and trace format may evolve before the first stable release.  
+> `v0.1.0` 实验阶段；首个稳定版本前，CLI 与追踪格式可能调整。
 
-## Why this exists / 为什么需要它
+## When to use it / 使用场景
 
-MCP servers normally reserve stdout for protocol messages, which makes ad-hoc debugging risky. This tool keeps protocol stdout clean while adding a reviewable local trace for tool calls, failures, and latency.
+Use it when an MCP tool call fails or takes too long and you need to see the request and response. The recorder saves traces to a separate file, leaving stdout for protocol messages.
 
-MCP 服务通常必须将 stdout 专用于协议消息，直接打印调试信息可能破坏通信。本工具在保持协议 stdout 纯净的同时，为工具调用、失败和耗时提供可审查的本地追踪。
+当 MCP 工具调用失败或响应慢，需要查看具体请求和响应时，可以使用它。记录保存在单独的文件中，stdout 继续用于协议通信。
 
-## Capabilities / 能力
+## Features / 功能
 
 - Transparent stdio forwarding with backpressure on both directions.  
   双向透明转发，并处理流背压。
@@ -26,10 +26,10 @@ MCP 服务通常必须将 stdout 专用于协议消息，直接打印调试信�
   关联请求与响应，统计方法、工具调用、错误和耗时。
 - Recursive key-based redaction with extra keys configurable from the CLI.  
   递归按字段名脱敏，并支持通过 CLI 增加自定义敏感字段。
-- Safe handling of malformed lines: forward unchanged, persist only length and SHA-256.  
-  安全处理畸形消息：原样转发，但仅持久化长度和 SHA-256。
-- Human-readable and JSON inspection output.  
-  同时提供人类可读摘要和 JSON 输出。
+- Malformed lines: forward unchanged, persist only length and SHA-256.  
+  无法解析的消息：原样转发，但仅持久化长度和 SHA-256。
+- Text and JSON summaries.  
+  提供文本摘要和 JSON 输出。
 
 ## Quick start / 快速开始
 
@@ -116,17 +116,17 @@ Build the project first, then replace your MCP server command with the recorder.
 npm run check
 ```
 
-The quality gate runs ESLint, Prettier verification, strict TypeScript checking, unit and subprocess integration tests, then a production build.
+This runs ESLint, Prettier verification, strict TypeScript checking, unit and subprocess integration tests, then builds the CLI.
 
-质量门禁依次执行 ESLint、Prettier 校验、严格 TypeScript 类型检查、单元与子进程集成测试，最后完成生产构建。
+该命令依次执行 ESLint、Prettier 校验、严格 TypeScript 类型检查、单元与子进程集成测试，最后构建 CLI。
 
-## Engineering decisions / 工程决策
+## Implementation notes / 实现说明
 
 - **No runtime dependencies / 无运行时依赖:** the proxy uses Node.js streams and JSON-RPC framing directly.
 - **Protocol isolation / 协议隔离:** the wrapped server is the only source written to stdout; diagnostics use stderr.
 - **Forward first / 转发优先:** invalid messages are observable without changing their bytes in transit.
 - **Local by default / 默认本地:** no telemetry, remote upload, or cloud service is included.
-- **Deliberate scope / 控制范围:** v0.1 supports stdio only; Streamable HTTP and HTML reports are future work.
+- **Transport support / 传输支持:** v0.1 supports stdio only; Streamable HTTP and HTML reports are future work.
 
 See [Architecture / 架构](docs/architecture.md), [Trace format / 追踪格式](docs/trace-format.md), and [Security / 安全](SECURITY.md).
 
