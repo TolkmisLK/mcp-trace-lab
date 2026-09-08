@@ -34,3 +34,6 @@ jobs:
 
       - name: Run quality gate / 执行质量门禁
         run: npm run check
+
+      - name: Run bundled example / 运行自带示例
+        run: npm run demo

@@ -43,6 +43,18 @@ npm ci
 npm run build
 ```
 
+Try the included example first / 可以先运行自带示例：
+
+```bash
+npm run demo
+```
+
+No MCP client, API key, or external server is needed. It records one successful tool call and one intentional JSON-RPC error, then prints a summary. Each run saves a new trace under `traces/demo-*/`.
+
+不需要配置 MCP 客户端、API 密钥或外部服务。示例会记录一次成功调用和一次故意返回的 JSON-RPC 错误，再显示分析结果。每次运行会在 `traces/demo-*/` 下保存新记录。
+
+[Read the example and its output / 查看演示步骤与输出](docs/demo.md)
+
 Wrap an existing MCP stdio server / 包装现有 MCP stdio 服务：
 
 ```bash
@@ -66,23 +78,6 @@ Inspect a trace / 分析追踪文件：
 ```bash
 node dist/cli.js inspect traces/session.trace.jsonl
 node dist/cli.js inspect --format json traces/session.trace.jsonl
-```
-
-Example text output / 文本输出示例：
-
-```text
-MCP Trace Lab · Trace summary / 追踪摘要
-File / 文件: session.trace.jsonl
-Events / 事件: 9
-Sessions / 会话: 1
-Protocol invalid / 协议无效: 0
-Trace parse errors / 追踪解析错误: 0
-
-Methods / 方法
-  tools/call  req=2 notif=0 res=2 err=1 avg=8.42 ms
-
-Tools / 工具
-  weather  calls=1 err=0 avg=6.11 ms
 ```
 
 ## MCP client configuration / MCP 客户端配置
