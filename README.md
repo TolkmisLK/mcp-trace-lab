@@ -7,29 +7,20 @@ MCP Trace Lab runs between an MCP client and a stdio server. It forwards the ori
 
 MCP Trace Lab 运行在 MCP 客户端与 stdio 服务端之间。它会转发原始字节流，将脱敏后的 JSON-RPC 事件记录为 JSONL，并关联请求与响应，统计工具调用、错误和响应耗时。
 
-> **Project status / 项目状态:** `v0.1.0`, experimental. The CLI and trace format may evolve before the first stable release.  
-> `v0.1.0` 实验阶段；首个稳定版本前，CLI 与追踪格式可能调整。
+> **Project status / 项目状态:** `v0.1.0` is an experimental source version, not a published release. The CLI and trace format may change.
+> `v0.1.0` 是实验阶段的源码版本，尚未公开发布；CLI 与追踪格式可能调整。
+
+[Run the bundled example and see its output / 运行自带示例并查看输出](docs/demo.md) · [Security and trace data / 追踪数据安全](SECURITY.md)
+
+Traces can retain secrets in free text or business-specific fields. Add sensitive field names with `--redact-key`, and review traces before sharing them.
+
+自由文本或业务字段中的秘密可能留在追踪文件中。可用 `--redact-key` 添加敏感字段名，分享前仍需检查记录。
 
 ## When to use it / 使用场景
 
 Use it when an MCP tool call fails or takes too long and you need to see the request and response. The recorder saves traces to a separate file, leaving stdout for protocol messages.
 
 当 MCP 工具调用失败或响应慢，需要查看具体请求和响应时，可以使用它。记录保存在单独的文件中，stdout 继续用于协议通信。
-
-## Features / 功能
-
-- Transparent stdio forwarding with backpressure on both directions.  
-  双向透明转发，并处理流背压。
-- JSON-RPC request, notification, response, and invalid-message classification.  
-  对 JSON-RPC 请求、通知、响应和无效消息分类。
-- Request/response correlation, method metrics, tool-call metrics, errors, and duration.  
-  关联请求与响应，统计方法、工具调用、错误和耗时。
-- Recursive key-based redaction with extra keys configurable from the CLI.  
-  递归按字段名脱敏，并支持通过 CLI 增加自定义敏感字段。
-- Malformed lines: forward unchanged, persist only length and SHA-256.  
-  无法解析的消息：原样转发，但仅持久化长度和 SHA-256。
-- Text and JSON summaries.  
-  提供文本摘要和 JSON 输出。
 
 ## Quick start / 快速开始
 
@@ -52,6 +43,14 @@ npm run demo
 No MCP client, API key, or external server is needed. It records one successful tool call and one intentional JSON-RPC error, then prints a summary. Each run saves a new trace under `traces/demo-*/`.
 
 不需要配置 MCP 客户端、API 密钥或外部服务。示例会记录一次成功调用和一次故意返回的 JSON-RPC 错误，再显示分析结果。每次运行会在 `traces/demo-*/` 下保存新记录。
+
+Excerpt from one recorded demo run / 一次已记录示例运行的输出摘录（耗时会变化）：
+
+```text
+Events / 事件: 9
+  echo  calls=1 err=0 avg=0.32 ms
+  fail  calls=1 err=1 avg=0.79 ms
+```
 
 [Read the example and its output / 查看演示步骤与输出](docs/demo.md)
 
@@ -79,6 +78,21 @@ Inspect a trace / 分析追踪文件：
 node dist/cli.js inspect traces/session.trace.jsonl
 node dist/cli.js inspect --format json traces/session.trace.jsonl
 ```
+
+## Features / 功能
+
+- Transparent stdio forwarding with backpressure on both directions.
+  双向透明转发，并处理流背压。
+- JSON-RPC request, notification, response, and invalid-message classification.
+  对 JSON-RPC 请求、通知、响应和无效消息分类。
+- Request/response correlation, method metrics, tool-call metrics, errors, and duration.
+  关联请求与响应，统计方法、工具调用、错误和耗时。
+- Recursive key-based redaction with extra keys configurable from the CLI.
+  递归按字段名脱敏，并支持通过 CLI 增加自定义敏感字段。
+- Malformed lines: forward unchanged, persist only length and SHA-256.
+  无法解析的消息：原样转发，但仅持久化长度和 SHA-256。
+- Text and JSON summaries.
+  提供文本摘要和 JSON 输出。
 
 ## MCP client configuration / MCP 客户端配置
 
