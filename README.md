@@ -62,6 +62,16 @@ node dist/cli.js record \
   -- node path/to/server.js
 ```
 
+In Windows PowerShell, use a single line; the backslashes above are Bash line continuations. / Windows PowerShell 请使用单行命令；上面的反斜杠是 Bash 的续行写法：
+
+```powershell
+node dist/cli.js record --output traces/session.trace.jsonl -- node path/to/server.js
+```
+
+The command after `--` is passed to the wrapped server. Redaction applies only to parsed messages written to the trace file; the client and server still exchange raw bytes. Server stderr is forwarded to recorder stderr and may be saved by the surrounding client.
+
+`--` 后面的命令和参数会传给被包装的服务。记录器只对保存到追踪文件的已解析消息进行脱敏；MCP 客户端和服务端之间仍传输原始字节。服务端 stderr 会转发到记录器 stderr，外围客户端可能另行保存它。
+
 Add application-specific sensitive keys / 增加业务敏感字段：
 
 ```bash
@@ -150,8 +160,8 @@ The recorder treats stdio payloads as newline-delimited JSON-RPC 2.0 and does no
 
 ## Roadmap / 路线图
 
-- `v0.1`: stdio recording, redaction, correlation, text/JSON inspection.
-- `v0.2`: configurable payload capture policies and standalone HTML report.
+- `v0.1`: stdio recording, redaction, correlation, text/JSON inspection. / stdio 记录、脱敏、请求响应关联，以及文本和 JSON 分析。
+- `v0.2`: configurable payload capture policies and standalone HTML report. / 计划增加可配置的载荷采集策略与独立 HTML 报告。
 - Later / 后续: Streamable HTTP support only after the stdio behavior is stable.
 
 ## License / 许可证

@@ -35,6 +35,10 @@ Default key matching is case-insensitive and separator-insensitive. It covers co
 
 默认字段匹配不区分大小写及分隔符，覆盖常见 Authorization、API Key、Token、密码、Secret、Cookie 和 Credential 名称；Bearer/Basic 值及 URL 内嵌凭据也会替换。业务特有标识应通过重复的 `--redact-key` 配置。
 
+Field names are stripped to ASCII letters and digits, then matched by the **whole normalized name**. A key is not redacted merely because it contains a substring such as `token`; `--redact-key` follows the same rule. Test your own field names with synthetic messages before recording a real session.
+
+字段名会先移除非 ASCII 字母与数字，再进行**完整名称匹配**；不会因为字段名包含 `token` 等片段就自动脱敏。`--redact-key` 也遵循这一规则。请先用合成消息检查自己的字段是否命中，再记录真实会话。
+
 ### Known limitations / 已知限制
 
 - Secrets in arbitrary free text may remain if they do not match supported patterns.  
@@ -45,6 +49,7 @@ Default key matching is case-insensitive and separator-insensitive. It covers co
   无效行的 SHA-256 指纹可能暴露重复载荷之间的相等关系。
 - File permissions follow the current OS defaults and process umask.  
   文件权限遵循当前操作系统默认值及进程 umask。
+- Protocol traffic is forwarded byte-for-byte, before redaction. A client, wrapped server, or surrounding logger may retain the raw payload. / 协议流量在脱敏前逐字节转发；客户端、被包装服务或外围日志仍可能保留原始载荷。
 
 ## Safe operation checklist / 安全使用清单
 

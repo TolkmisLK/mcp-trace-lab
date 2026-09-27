@@ -53,9 +53,9 @@ Each source pauses when either the protocol destination or trace file reaches it
 
 ### Lifecycle / 生命周期
 
-Client EOF closes upstream stdin. `SIGINT` and `SIGTERM` are forwarded to the wrapped server. The recorder waits for the server process and closes the trace stream before returning its exit status.
+Client EOF closes upstream stdin. `SIGINT` and `SIGTERM` are forwarded to the wrapped server. The recorder waits for the server process and closes the trace stream before returning an exit code: the child's numeric exit code if present, otherwise `130` for `SIGINT` or `1` for another signal.
 
-客户端 EOF 会关闭上游 stdin；`SIGINT` 与 `SIGTERM` 会传递给被包装服务。记录器等待服务进程结束，并在返回退出状态前关闭追踪流。
+客户端 EOF 会关闭上游 stdin；`SIGINT` 与 `SIGTERM` 会传递给被包装服务。记录器等待服务进程结束并关闭追踪流；若子进程提供数字退出码则返回该值，若因 `SIGINT` 结束则返回 `130`，其他信号结束则返回 `1`。
 
 ## Dependency strategy / 依赖策略
 
