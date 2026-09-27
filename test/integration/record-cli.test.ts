@@ -9,6 +9,55 @@ import { describe, it } from "node:test";
 import { inspectTrace } from "../../src/inspect.js";
 
 describe("record CLI integration", () => {
+  it("exits with the server while client stdin stays open", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "mcp-trace-open-stdin-"));
+    for (const serverExitCode of [0, 7]) {
+      const child = spawn(
+        process.execPath,
+        [
+          "--import",
+          "tsx",
+          resolve("src/cli.ts"),
+          "record",
+          "--output",
+          join(directory, `${serverExitCode}.trace.jsonl`),
+          "--",
+          process.execPath,
+          "-e",
+          `process.exit(${serverExitCode})`,
+        ],
+        { stdio: ["pipe", "pipe", "pipe"] },
+      );
+      let stderr = "";
+      child.stderr.setEncoding("utf8");
+      child.stderr.on("data", (chunk: string) => (stderr += chunk));
+      child.stdout.resume();
+
+      const exitCode = await new Promise<number | null>(
+        (resolveExit, reject) => {
+          const timeout = setTimeout(() => {
+            child.kill();
+            reject(
+              new Error(
+                `Recorder stayed open after server exited ${serverExitCode}`,
+              ),
+            );
+          }, 5_000);
+          child.once("close", (code) => {
+            clearTimeout(timeout);
+            resolveExit(code);
+          });
+          child.once("error", (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+        },
+      );
+      assert.equal(exitCode, serverExitCode, stderr);
+      assert.equal(child.stdin.writableEnded, false);
+    }
+  });
+
   it("does not crash when the wrapped server closes stdin early", async () => {
     const directory = await mkdtemp(join(tmpdir(), "mcp-trace-early-exit-"));
     const child = spawn(
