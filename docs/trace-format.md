@@ -12,8 +12,8 @@ Trace files use UTF-8 JSON Lines. Each line is an independent event; multiple re
 | `sessionId`      | UUID string             | Recorder process session / 记录进程会话                                                              |
 | `sequence`       | integer                 | Monotonic within one session / 单次会话内单调递增                                                    |
 | `timestamp`      | ISO 8601 string         | Observation wall-clock time / 观察时钟时间                                                           |
-| `direction`      | enum                    | `client_to_server` or `server_to_client`                                                             |
-| `kind`           | enum                    | `request`, `notification`, `response`, or `invalid`                                                  |
+| `direction`      | enum                    | `client_to_server`（客户端到服务端）或 `server_to_client`（服务端到客户端）                          |
+| `kind`           | enum                    | `request`（请求）、`notification`（通知）、`response`（响应）或 `invalid`（无效消息）                |
 | `byteLength`     | integer                 | Original line size excluding delimiter / 不含分隔符的原始行字节数                                    |
 | `method`         | string, optional        | JSON-RPC method; copied to correlated responses / JSON-RPC 方法；会复制到关联响应                    |
 | `id`             | string, number, or null | JSON-RPC identifier / JSON-RPC 标识符                                                                |
