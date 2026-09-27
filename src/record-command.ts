@@ -66,6 +66,18 @@ export async function runRecord(options: RecordOptions): Promise<number> {
     recorder.observe("server_to_client", line),
   );
 
+  // A server may close stdin before its process exits. Stop reading the client
+  // stream when its input pipe closes so an ordinary early exit cannot crash
+  // the recorder with an unhandled EPIPE.
+  const stdinFailure = new Promise<never>((_, reject) => {
+    child.stdin.on("error", (error: NodeJS.ErrnoException) => {
+      process.stdin.pause();
+      if (error.code !== "EPIPE" && error.code !== "ERR_STREAM_DESTROYED") {
+        reject(error);
+      }
+    });
+  });
+
   forwardObserved(process.stdin, child.stdin, clientObserver, recorder, true);
   forwardObserved(
     child.stdout,
@@ -96,6 +108,7 @@ export async function runRecord(options: RecordOptions): Promise<number> {
       once(child, "error").then(([error]) => {
         throw error;
       }),
+      stdinFailure,
     ]);
   } finally {
     process.removeListener("SIGINT", onSigint);

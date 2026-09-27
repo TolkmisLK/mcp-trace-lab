@@ -9,6 +9,41 @@ import { describe, it } from "node:test";
 import { inspectTrace } from "../../src/inspect.js";
 
 describe("record CLI integration", () => {
+  it("does not crash when the wrapped server closes stdin early", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "mcp-trace-early-exit-"));
+    const child = spawn(
+      process.execPath,
+      [
+        "--import",
+        "tsx",
+        resolve("src/cli.ts"),
+        "record",
+        "--output",
+        join(directory, "session.trace.jsonl"),
+        "--",
+        process.execPath,
+        "-e",
+        "process.exit(0)",
+      ],
+      { stdio: ["pipe", "pipe", "pipe"] },
+    );
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk: string) => (stderr += chunk));
+    child.stdout.resume();
+    child.stdin.on("error", (error: NodeJS.ErrnoException) => {
+      assert.ok(["EPIPE", "EOF"].includes(error.code ?? ""));
+    });
+    child.stdin.end(Buffer.alloc(1_000_000, "a"));
+
+    const [exitCode] = (await once(child, "close")) as [
+      number,
+      NodeJS.Signals | null,
+    ];
+    assert.equal(exitCode, 0, stderr);
+    assert.doesNotMatch(stderr, /Unhandled 'error' event|EPIPE/);
+  });
+
   it("forwards stdio unchanged while recording a redacted trace", async () => {
     const directory = await mkdtemp(join(tmpdir(), "mcp-trace-integration-"));
     const tracePath = join(directory, "session.trace.jsonl");
