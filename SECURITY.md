@@ -24,6 +24,8 @@ MCP Trace Lab 用于降低常见凭据字段被意外持久化的风险，但它
   MCP 客户端和被包装服务被视为可信本地进程。
 - Trace files are sensitive local artifacts. They are not safe to publish without review.  
   追踪文件属于敏感本地产物，未经审查不得公开。
+- HTML reports embed saved trace data. They are also sensitive local artifacts and must be reviewed before sharing. The report uses inline resources and a restrictive Content Security Policy; it makes no network requests.
+  HTML 报告内嵌已保存的追踪数据，同样属于敏感本地产物，分享前必须审查。报告使用内联资源和限制性内容安全策略，不发起网络请求。
 - The inspector parses JSON but never executes captured values.  
   分析器只解析 JSON，不执行捕获内容。
 - Server stderr is forwarded and not recorded by this project. The surrounding client may still persist it.  

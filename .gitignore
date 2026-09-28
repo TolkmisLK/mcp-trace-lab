@@ -3,6 +3,7 @@ dist/
 coverage/
 *.log
 *.trace.jsonl
+*.trace.html
 .DS_Store
 .env
 .env.*

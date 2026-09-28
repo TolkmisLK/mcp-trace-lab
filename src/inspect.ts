@@ -1,6 +1,6 @@
-import { createReadStream } from "node:fs";
 import { basename, resolve } from "node:path";
-import { createInterface } from "node:readline";
+
+import { readTrace } from "./trace-reader.js";
 
 import {
   TRACE_SCHEMA_VERSION,
@@ -8,7 +8,6 @@ import {
   type MessageKind,
   type MethodSummary,
   type ToolSummary,
-  type TraceEvent,
   type TraceSummary,
 } from "./types.js";
 
@@ -26,24 +25,6 @@ function emptyToolSummary(): ToolSummary {
   return { calls: 0, errors: 0, completedDurationsMs: [] };
 }
 
-function isTraceEvent(value: unknown): value is TraceEvent {
-  if (value === null || typeof value !== "object") {
-    return false;
-  }
-  const event = value as Partial<TraceEvent>;
-  return (
-    typeof event.schemaVersion === "string" &&
-    typeof event.sessionId === "string" &&
-    typeof event.sequence === "number" &&
-    typeof event.timestamp === "string" &&
-    (event.direction === "client_to_server" ||
-      event.direction === "server_to_client") &&
-    ["request", "notification", "response", "invalid"].includes(
-      event.kind ?? "",
-    )
-  );
-}
-
 export async function inspectTrace(tracePath: string): Promise<TraceSummary> {
   const absolutePath = resolve(tracePath);
   const summary: TraceSummary = {
@@ -55,33 +36,17 @@ export async function inspectTrace(tracePath: string): Promise<TraceSummary> {
     invalidProtocolMessages: 0,
     directions: { client_to_server: 0, server_to_client: 0 },
     kinds: { request: 0, notification: 0, response: 0, invalid: 0 },
-    methods: {},
-    tools: {},
+    methods: Object.create(null) as TraceSummary["methods"],
+    tools: Object.create(null) as TraceSummary["tools"],
   };
   const sessionIds = new Set<string>();
 
-  const lines = createInterface({
-    input: createReadStream(absolutePath),
-    crlfDelay: Infinity,
-  });
-  for await (const line of lines) {
-    if (line.trim().length === 0) {
-      continue;
-    }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(line) as unknown;
-    } catch {
+  for await (const line of readTrace(absolutePath)) {
+    if ("malformed" in line) {
       summary.malformedTraceLines += 1;
       continue;
     }
-    if (!isTraceEvent(parsed)) {
-      summary.malformedTraceLines += 1;
-      continue;
-    }
-
-    const event = parsed;
+    const event = line.event;
     sessionIds.add(event.sessionId);
     summary.sessions = sessionIds.size;
     summary.events += 1;

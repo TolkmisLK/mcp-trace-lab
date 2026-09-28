@@ -8,17 +8,20 @@ import {
   inspectTrace,
 } from "./inspect.js";
 import { runRecord } from "./record-command.js";
+import { generateHtmlReport } from "./report.js";
 
 const HELP = `MCP Trace Lab — local-first MCP stdio recorder / 本地优先的 MCP stdio 记录器
 
 Usage / 用法:
   mcp-trace record --output <trace.jsonl> [--redact-key <key>] -- <server> [args...]
   mcp-trace inspect [--format text|json] <trace.jsonl>
+  mcp-trace report --output <report.html> <trace.jsonl>
   mcp-trace --help
 
 Examples / 示例:
   mcp-trace record --output traces/demo.trace.jsonl -- node server.js
   mcp-trace inspect traces/demo.trace.jsonl
+  mcp-trace report --output traces/demo.trace.html traces/demo.trace.jsonl
 
 Security / 安全:
   Traces may still contain sensitive application data. Keep them local and review before sharing.
@@ -108,6 +111,29 @@ async function main(arguments_: readonly string[]): Promise<number> {
         ? formatJsonSummary(summary)
         : formatTextSummary(summary),
     );
+    return 0;
+  }
+
+  if (command === "report") {
+    const parsed = parseArgs({
+      args: rest,
+      options: { output: { type: "string", short: "o" } },
+      strict: true,
+      allowPositionals: true,
+    });
+    const tracePath = parsed.positionals[0];
+    const output = parsed.values.output;
+    if (
+      tracePath === undefined ||
+      output === undefined ||
+      parsed.positionals.length !== 1
+    ) {
+      throw new CliError(
+        "Usage: report --output <report.html> <trace.jsonl> / 请指定输入和输出文件",
+      );
+    }
+    await generateHtmlReport(tracePath, output);
+    process.stdout.write(`Report / 报告: ${output}\n`);
     return 0;
   }
 

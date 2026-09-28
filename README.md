@@ -89,6 +89,22 @@ node dist/cli.js inspect traces/session.trace.jsonl
 node dist/cli.js inspect --format json traces/session.trace.jsonl
 ```
 
+Generate a standalone HTML report / 生成可离线打开的独立 HTML 报告：
+
+```bash
+node dist/cli.js report --output traces/session.trace.html traces/session.trace.jsonl
+```
+
+Open the resulting file locally. Search messages, filter by status, kind or session, and select a timeline row to see its saved payload and paired request or response. Durations are shown only where the trace recorded `durationMs`; an unmatched response or unanswered request is labeled. The command refuses to overwrite an existing report. Input is limited to 10 MiB and 10,000 nonempty rows to keep the generated page manageable.
+
+[Step-by-step HTML report guide / HTML 报告使用指南](docs/html-report.md)
+
+在本地打开生成的文件。可搜索消息、按状态、类型、会话筛选，选择时间线中的一行查看已保存内容及配对的请求或响应。仅在记录中存在 `durationMs` 时显示耗时；未匹配响应和未完成请求会明确标记。命令不会覆盖已有报告；输入上限为 10 MiB 和 10,000 个非空行。
+
+The report embeds trace data and all UI resources in one file; it does not load remote resources. It can still contain sensitive application data. Review and redact both the trace and HTML before sharing. A JSON-RPC `error` response is counted as an error; a tool result's `isError` field is shown in the payload but is not counted as a JSON-RPC error.
+
+报告把追踪数据及界面资源放在同一个文件，不加载远程资源。业务敏感内容仍可能存在；分享追踪文件或 HTML 前请检查并脱敏。错误计数指 JSON-RPC `error` 响应；工具结果中的 `isError` 会在消息内容中显示，但不计入 JSON-RPC 错误。
+
 ## Features / 功能
 
 - Transparent stdio forwarding with backpressure on both directions.
@@ -101,8 +117,8 @@ node dist/cli.js inspect --format json traces/session.trace.jsonl
   递归按字段名脱敏，并支持通过 CLI 增加自定义敏感字段。
 - Malformed lines: forward unchanged, persist only length and SHA-256.
   无法解析的消息：原样转发，但仅持久化长度和 SHA-256。
-- Text and JSON summaries.
-  提供文本摘要和 JSON 输出。
+- Text and JSON summaries, plus an offline HTML timeline report.
+  提供文本、JSON 摘要和离线 HTML 时间线报告。
 
 ## MCP client configuration / MCP 客户端配置
 
@@ -145,7 +161,7 @@ This runs ESLint, Prettier verification, strict TypeScript checking, unit and su
 - **Protocol isolation / 协议隔离:** the wrapped server is the only source written to stdout; diagnostics use stderr.
 - **Forward first / 转发优先:** invalid messages are observable without changing their bytes in transit.
 - **Local by default / 默认本地:** no telemetry, remote upload, or cloud service is included.
-- **Transport support / 传输支持:** v0.1 supports stdio only; Streamable HTTP and HTML reports are future work.
+- **Transport support / 传输支持:** v0.1 supports stdio only; Streamable HTTP is future work.
 
 See [Architecture / 架构](docs/architecture.md), [Trace format / 追踪格式](docs/trace-format.md), and [Security / 安全](SECURITY.md).
 
@@ -161,7 +177,7 @@ The recorder treats stdio payloads as newline-delimited JSON-RPC 2.0 and does no
 ## Roadmap / 路线图
 
 - `v0.1`: stdio recording, redaction, correlation, text/JSON inspection. / stdio 记录、脱敏、请求响应关联，以及文本和 JSON 分析。
-- `v0.2`: configurable payload capture policies and standalone HTML report. / 计划增加可配置的载荷采集策略与独立 HTML 报告。
+- `v0.2`: configurable payload capture policies. / 计划增加可配置的载荷采集策略。
 - Later / 后续: Streamable HTTP support only after the stdio behavior is stable.
 
 ## License / 许可证
