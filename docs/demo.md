@@ -75,7 +75,10 @@ Replace `demo-XXXXXX` with the directory printed by your run.
 
 ```bash
 node dist/cli.js inspect examples/demo.trace.jsonl
+node dist/cli.js report --output traces/demo.trace.html examples/demo.trace.jsonl
 ```
+
+The second command creates a standalone HTML timeline. Open `traces/demo.trace.html` locally, choose the error status, then select the `fail` response to see the saved JSON-RPC error and its recorded duration. / 第二条命令会生成独立 HTML 时间线。本地打开 `traces/demo.trace.html`，筛选“错误”，再选择 `fail` 的响应，即可查看保存的 JSON-RPC 错误及记录耗时。
 
 The checked-in trace contains only this example's synthetic messages. You can inspect it without running the server again.
 

@@ -1,15 +1,26 @@
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { describe, it } from "node:test";
+import { dirname, join, resolve } from "node:path";
+import { describe, it, type TestContext } from "node:test";
 
 import { formatTextSummary, inspectTrace } from "../src/inspect.js";
 import { TRACE_SCHEMA_VERSION, type TraceEvent } from "../src/types.js";
 
+async function testDirectory(context: TestContext): Promise<string> {
+  const directory = await mkdtemp(join(tmpdir(), "mcp-trace-inspect-"));
+  context.after(async () => {
+    if (dirname(resolve(directory)) !== resolve(tmpdir())) {
+      throw new Error("Unexpected test directory / 测试目录异常");
+    }
+    await rm(directory, { recursive: true, force: true });
+  });
+  return directory;
+}
+
 describe("inspectTrace", () => {
-  it("aggregates methods, tools, errors, and malformed trace lines", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "mcp-trace-inspect-"));
+  it("aggregates methods, tools, errors, and malformed trace lines", async (context) => {
+    const directory = await testDirectory(context);
     const tracePath = join(directory, "trace.jsonl");
     const base = {
       schemaVersion: TRACE_SCHEMA_VERSION,
@@ -61,6 +72,34 @@ describe("inspectTrace", () => {
     assert.match(
       formatTextSummary(summary),
       /weather\s+calls=1 err=1 avg=12\.00 ms/,
+    );
+  });
+
+  it("counts method names that match Object prototype properties", async (context) => {
+    const directory = await testDirectory(context);
+    const tracePath = join(directory, "trace.jsonl");
+    await writeFile(
+      tracePath,
+      `${JSON.stringify({
+        schemaVersion: TRACE_SCHEMA_VERSION,
+        sessionId: "s",
+        sequence: 1,
+        timestamp: "2026-09-28T00:00:00.000Z",
+        direction: "client_to_server",
+        kind: "request",
+        byteLength: 1,
+        method: "__proto__",
+        toolName: "constructor",
+      })}\n`,
+      "utf8",
+    );
+    const summary = await inspectTrace(tracePath);
+    assert.equal(summary.methods["__proto__"]?.requests, 1);
+    assert.equal(
+      Object.entries(summary.tools).find(
+        ([name]) => name === "constructor",
+      )?.[1].calls,
+      1,
     );
   });
 });
