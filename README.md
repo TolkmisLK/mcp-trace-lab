@@ -7,8 +7,8 @@ MCP Trace Lab runs between an MCP client and a stdio server. It forwards the ori
 
 MCP Trace Lab 运行在 MCP 客户端与 stdio 服务端之间。它会转发原始字节流，将脱敏后的 JSON-RPC 事件记录为 JSONL，并关联请求与响应，统计工具调用、错误和响应耗时。
 
-> **Project status / 项目状态:** `v0.1.0` is an experimental source version, not a published release. The CLI and trace format may change.
-> `v0.1.0` 是实验阶段的源码版本，尚未公开发布；CLI 与追踪格式可能调整。
+> **Project status / 项目状态:** The CLI and trace format are experimental. See [preview downloads](https://github.com/TolkmisLK/mcp-trace-lab/releases) and the [installation guide](docs/RELEASE-NOTES.md); published packages contain compiled JavaScript.
+> CLI 与追踪格式仍处于实验阶段，可能调整。见[预览下载](https://github.com/TolkmisLK/mcp-trace-lab/releases)和[安装指南](docs/RELEASE-NOTES.md)；发行包内包含已编译代码。
 
 [Run the bundled example and see its output / 运行自带示例并查看输出](docs/demo.md) · [Security and trace data / 追踪数据安全](SECURITY.md)
 
@@ -87,7 +87,12 @@ Inspect a trace / 分析追踪文件：
 ```bash
 node dist/cli.js inspect traces/session.trace.jsonl
 node dist/cli.js inspect --format json traces/session.trace.jsonl
+node dist/cli.js inspect --fail-on-error traces/session.trace.jsonl
 ```
+
+With `--fail-on-error`, inspect prints the summary and exits with code **2** for JSON-RPC errors, tool failures, invalid protocol messages or malformed trace rows. Otherwise a readable trace returns 0. Invalid arguments or unreadable files return 1. Pending requests do not fail this check.
+
+使用 `--fail-on-error` 时仍输出摘要；发现协议错误、工具执行失败、无效协议消息或损坏追踪行则退出码为 **2**，适合脚本检查。默认读取成功为 0，参数或文件读取失败为 1；未响应请求不会触发此检查。
 
 Generate a standalone HTML report / 生成可离线打开的独立 HTML 报告：
 
@@ -101,9 +106,9 @@ Open the resulting file locally. Search messages, filter by status, kind or sess
 
 在本地打开生成的文件。可搜索消息、按状态、类型、会话筛选，选择时间线中的一行查看已保存内容及配对的请求或响应。仅在记录中存在 `durationMs` 时显示耗时；未匹配响应和未完成请求会明确标记。命令不会覆盖已有报告；输入上限为 10 MiB 和 10,000 个非空行。
 
-The report embeds trace data and all UI resources in one file; it does not load remote resources. It can still contain sensitive application data. Review and redact both the trace and HTML before sharing. A JSON-RPC `error` response is counted as an error; a tool result's `isError` field is shown in the payload but is not counted as a JSON-RPC error.
+The report embeds trace data and all UI resources in one file; it does not load remote resources. It can still contain sensitive application data. Review and redact both the trace and HTML before sharing. JSON-RPC errors and `tools/call` results with `isError: true` are counted separately. Tool failures have their own timeline status and filter.
 
-报告把追踪数据及界面资源放在同一个文件，不加载远程资源。业务敏感内容仍可能存在；分享追踪文件或 HTML 前请检查并脱敏。错误计数指 JSON-RPC `error` 响应；工具结果中的 `isError` 会在消息内容中显示，但不计入 JSON-RPC 错误。
+报告把追踪数据及界面资源放在同一个文件，不加载远程资源。业务敏感内容仍可能存在；分享追踪文件或 HTML 前请检查并脱敏。JSON-RPC 协议错误和 `tools/call` 结果中的 `isError: true` 分开统计；工具执行失败有独立时间线状态及筛选入口。
 
 ## Features / 功能
 

@@ -31,7 +31,7 @@ Use Status to find JSON-RPC errors, invalid lines, unmatched responses or unansw
 
 - 报告按文件顺序显示事件；时间戳是记录字段，不用来重新排序。/ Rows retain file order; timestamps do not reorder them.
 - 追加的多个会话按 `sessionId` 隔离关联。相同 ID 的后续请求会取代尚未配对的前一请求，前者标为“ID 被复用”。/ Sessions are isolated; reuse of a pending ID marks the earlier request as replaced.
-- “错误”指 JSON-RPC `error` 响应。工具结果 `isError` 仍可在保存的消息中看到，但不计入该计数。/ Error counts refer to JSON-RPC errors, not tool result `isError` values.
+- “协议错误”和“工具执行失败”分开统计、筛选。后者仅针对 `tools/call` 的正常协议响应中 `result.isError === true`。请求行显示配对响应的结果，概览只统计响应一次。旧追踪若保留该字段也可识别，已脱敏的历史字段无法还原。 / JSON-RPC errors and tool execution failures have separate counts and filters. Only a tools/call result with boolean isError=true is a tool failure. Paired requests inherit its display state; counters count responses once. Redacted historical values cannot be recovered.
 - 格式无效的追踪行只显示行号；无效协议消息显示记录器保存的解析原因与指纹，不恢复原始内容。/ Malformed trace rows show only line numbers. Invalid protocol events show saved metadata, not discarded raw content.
 - 输入上限为 10 MiB 和 10,000 个非空行，超限会报错且不会生成报告。时间线每次显示最多 200 行，可继续点击“显示更多”。/ The 10 MiB and 10,000 row limits avoid an oversized standalone page; timeline rows are shown in batches of 200.
 - 报告内嵌追踪数据，仍可能包含自由文本中的秘密或业务数据。分享前审查和脱敏 HTML 与原追踪文件。/ The embedded trace may retain sensitive data. Review and redact both files before sharing.

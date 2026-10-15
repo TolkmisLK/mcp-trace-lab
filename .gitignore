@@ -9,3 +9,5 @@ coverage/
 .env.*
 !.env.example
 !examples/demo.trace.jsonl
+
+package-artifacts/

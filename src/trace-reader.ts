@@ -34,6 +34,7 @@ function isTraceEvent(value: unknown): value is TraceEvent {
     (event.responseStatus === undefined ||
       event.responseStatus === "ok" ||
       event.responseStatus === "error") &&
+    (event.toolError === undefined || typeof event.toolError === "boolean") &&
     (event.durationMs === undefined ||
       (typeof event.durationMs === "number" &&
         Number.isFinite(event.durationMs) &&
