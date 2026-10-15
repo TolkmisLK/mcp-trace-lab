@@ -1,0 +1,49 @@
+name: Publish CLI preview / 发布命令行预览包
+on:
+  push:
+    tags: ["v*-preview.*"]
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check tag / 核对标签
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node --input-type=module -e 'import p from "./package.json" with {type:"json"}; if (process.env.RELEASE_TAG !== `v${p.version}`) throw Error("Tag/version mismatch");'
+      - run: npm run check
+      - run: npm run package:check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-preview
+          path: package-artifacts/*
+          if-no-files-found: error
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: cli-preview
+          path: package-artifacts
+      - name: Publish verified preview / 发布已核验预览
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          cd package-artifacts
+          sha256sum -c *.sha256
+          cd ..
+          gh release create "$RELEASE_TAG" package-artifacts/* --verify-tag --target "$RELEASE_COMMIT" --prerelease --title "循迹 $RELEASE_TAG" --notes-file docs/RELEASE-NOTES.md

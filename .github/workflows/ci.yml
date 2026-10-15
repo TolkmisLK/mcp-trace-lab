@@ -37,3 +37,6 @@ jobs:
 
       - name: Run bundled example / 运行自带示例
         run: npm run demo
+
+      - name: Verify installable archive / 验证可安装归档
+        run: npm run package:check

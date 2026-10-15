@@ -14,6 +14,7 @@ export function reportClient(): void {
       toolName?: string;
       id?: string | number | null;
       responseStatus?: string;
+      toolError?: boolean;
       durationMs?: number;
       parseError?: string;
       message?: unknown;
@@ -42,7 +43,8 @@ export function reportClient(): void {
   const labels: Record<string, string> = {
     pending: "未响应",
     ok: "成功",
-    error: "错误",
+    error: "协议错误",
+    tool_error: "工具执行失败",
     invalid: "协议无效",
     malformed: "追踪行无效",
     unmatched: "未匹配响应",
@@ -89,6 +91,12 @@ export function reportClient(): void {
   addCard(
     "JSON-RPC 错误 / Errors",
     tally((row) => row.event?.responseStatus === "error"),
+  );
+  addCard(
+    "工具执行失败 / Tool failures",
+    tally(
+      (row) => row.event?.kind === "response" && row.event.toolError === true,
+    ),
   );
   addCard(
     "无效行 / Invalid",

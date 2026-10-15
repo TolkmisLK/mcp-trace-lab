@@ -14,7 +14,7 @@ const HELP = `MCP Trace Lab — local-first MCP stdio recorder / 本地优先的
 
 Usage / 用法:
   mcp-trace record --output <trace.jsonl> [--redact-key <key>] -- <server> [args...]
-  mcp-trace inspect [--format text|json] <trace.jsonl>
+  mcp-trace inspect [--format text|json] [--fail-on-error] <trace.jsonl>
   mcp-trace report --output <report.html> <trace.jsonl>
   mcp-trace --help
 
@@ -86,7 +86,10 @@ async function main(arguments_: readonly string[]): Promise<number> {
   if (command === "inspect") {
     const parsed = parseArgs({
       args: rest,
-      options: { format: { type: "string", short: "f", default: "text" } },
+      options: {
+        format: { type: "string", short: "f", default: "text" },
+        "fail-on-error": { type: "boolean", default: false },
+      },
       strict: true,
       allowPositionals: true,
     });
@@ -111,7 +114,14 @@ async function main(arguments_: readonly string[]): Promise<number> {
         ? formatJsonSummary(summary)
         : formatTextSummary(summary),
     );
-    return 0;
+    return parsed.values["fail-on-error"] &&
+      summary.protocolErrors +
+        summary.toolErrors +
+        summary.invalidProtocolMessages +
+        summary.malformedTraceLines >
+        0
+      ? 2
+      : 0;
   }
 
   if (command === "report") {

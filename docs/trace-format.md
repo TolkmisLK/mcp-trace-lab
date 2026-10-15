@@ -53,3 +53,11 @@ Trace files use UTF-8 JSON Lines. Each line is an independent event; multiple re
 - Additive optional fields do not change the major schema version. / 新增可选字段不提升主版本。
 - Removing or redefining a field requires a major schema version change. / 删除或重新定义字段必须提升主版本。
 - Invalid protocol payloads are fingerprinted but never stored verbatim. / 无效协议载荷仅保留指纹，不保存原文。
+
+## 工具执行失败 / Tool execution failure
+
+`toolError` 是可选布尔字段。新记录器在配对的 `tools/call` 响应中读取原始 `result.isError === true`，在脱敏消息之外保存 `toolError: true`，所以自定义脱敏 `isError` 时仍能诊断。`responseStatus` 保留 JSON-RPC 含义，工具失败的正常协议响应仍为 `ok`。旧记录可由已保存消息推断，已脱敏的历史字段无法恢复。
+
+The optional boolean `toolError` preserves the diagnosis before message redaction. JSON-RPC `responseStatus` keeps its meaning. Inspect adds top-level `protocolErrors` and `toolErrors`, plus `toolErrors` per method/tool. Existing `errors` fields continue to count JSON-RPC errors only.
+
+参考 / Reference: [MCP 工具错误处理规范](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/2025-11-25/server/tools.mdx#error-handling).

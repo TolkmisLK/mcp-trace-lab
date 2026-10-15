@@ -6,6 +6,7 @@ import { dirname } from "node:path";
 
 import { classifyMessage, hashContent, requestKey } from "./protocol.js";
 import { redactValue } from "./redaction.js";
+import { resultIsError } from "./tool-error.js";
 import {
   TRACE_SCHEMA_VERSION,
   type Direction,
@@ -129,6 +130,15 @@ export class TraceRecorder {
       }
     }
 
+    // Preserve the diagnosis even if a custom redaction key removes isError.
+    if (
+      event.kind === "response" &&
+      event.method === "tools/call" &&
+      event.responseStatus === "ok" &&
+      resultIsError(parsed)
+    ) {
+      event.toolError = true;
+    }
     return this.#write(event);
   }
 

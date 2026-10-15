@@ -18,6 +18,7 @@ export interface TraceEvent {
   toolName?: string;
   responseStatus?: ResponseStatus;
   durationMs?: number;
+  toolError?: boolean;
   message?: unknown;
   parseError?: string;
   contentSha256?: string;
@@ -47,12 +48,14 @@ export interface MethodSummary {
   notifications: number;
   responses: number;
   errors: number;
+  toolErrors: number;
   completedDurationsMs: number[];
 }
 
 export interface ToolSummary {
   calls: number;
   errors: number;
+  toolErrors: number;
   completedDurationsMs: number[];
 }
 
@@ -63,6 +66,8 @@ export interface TraceSummary {
   events: number;
   malformedTraceLines: number;
   invalidProtocolMessages: number;
+  protocolErrors: number;
+  toolErrors: number;
   directions: Record<Direction, number>;
   kinds: Record<MessageKind, number>;
   methods: Record<string, MethodSummary>;
