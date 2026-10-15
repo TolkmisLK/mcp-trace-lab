@@ -1,6 +1,6 @@
 {
   "name": "mcp-trace-lab",
-  "version": "0.2.0-preview.1",
+  "version": "0.2.0-preview.2",
   "description": "A local-first flight recorder and analyzer for MCP stdio traffic.",
   "type": "module",
   "bin": {
@@ -11,6 +11,7 @@
     "docs",
     "examples",
     "README.md",
+    "SECURITY.md",
     "LICENSE"
   ],
   "scripts": {
