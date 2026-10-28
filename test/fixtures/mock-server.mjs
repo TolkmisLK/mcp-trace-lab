@@ -48,6 +48,20 @@ for await (const line of lines) {
         },
       })}\n`,
     );
+  } else if (
+    message.method === "tools/call" &&
+    message.params?.name === "tool-fail"
+  ) {
+    process.stdout.write(
+      `${JSON.stringify({
+        jsonrpc: "2.0",
+        id: message.id,
+        result: {
+          isError: true,
+          content: [{ type: "text", text: "private-server-payload" }],
+        },
+      })}\n`,
+    );
   } else if (message.method === "tools/call") {
     process.stdout.write(
       `${JSON.stringify({

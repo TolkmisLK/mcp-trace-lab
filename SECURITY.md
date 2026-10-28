@@ -41,6 +41,16 @@ Field names are stripped to ASCII letters and digits, then matched by the **whol
 
 字段名会先移除非 ASCII 字母与数字，再进行**完整名称匹配**；不会因为字段名包含 `token` 等片段就自动脱敏。`--redact-key` 也遵循这一规则。请先用合成消息检查自己的字段是否命中，再记录真实会话。
 
+### Metadata capture / 仅元数据采集
+
+Use `record --capture metadata` when message bodies are unnecessary for the investigation. This mode omits the entire saved `message` field, including free text, arguments, result content, error details, notification data, and extra message fields. It preserves IDs, method and tool names, timestamps, byte lengths, request/response correlation, durations, and failure flags. Invalid lines still retain their SHA-256 fingerprint. These metadata fields are not redacted and can themselves be sensitive; `--redact-key` applies only to saved messages in `redacted` mode. This is data minimization, not anonymization.
+
+不需要消息正文时可用 `record --capture metadata`。该模式省略整个 `message` 字段，包括自由文本、参数、结果正文、错误详情、通知数据和额外消息字段；保留 ID、方法名、工具名、时间戳、字节数、请求响应关联、耗时及失败标志。无效行仍保留 SHA-256 指纹。这些元数据不做脱敏，本身也可能敏感；`--redact-key` 仅作用于 `redacted` 模式保存的消息。这是减少采集量，不是匿名化。
+
+The mode does not change raw forwarding or stderr, erase earlier sessions in an appended trace, or remove payloads from existing HTML reports. Review the complete file before sharing it.
+
+该模式不改变原始转发或 stderr，不删除追加文件中的旧会话，也不移除已有 HTML 报告中的载荷。分享前仍需检查整个文件。
+
 ### Known limitations / 已知限制
 
 - Secrets in arbitrary free text may remain if they do not match supported patterns.  

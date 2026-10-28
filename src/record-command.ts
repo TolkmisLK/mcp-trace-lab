@@ -5,12 +5,14 @@ import type { Readable, Writable } from "node:stream";
 
 import { LineObserver } from "./line-observer.js";
 import { TraceRecorder } from "./recorder.js";
+import type { CapturePolicy } from "./types.js";
 
 export interface RecordOptions {
   output: string;
   command: string;
   commandArguments: readonly string[];
   redactKeys?: readonly string[];
+  capturePolicy?: CapturePolicy;
 }
 
 function forwardObserved(
@@ -59,6 +61,9 @@ function forwardObserved(
 export async function runRecord(options: RecordOptions): Promise<number> {
   const outputPath = resolve(options.output);
   const recorder = await TraceRecorder.create(outputPath, {
+    ...(options.capturePolicy === undefined
+      ? {}
+      : { capturePolicy: options.capturePolicy }),
     ...(options.redactKeys === undefined
       ? {}
       : { additionalKeys: options.redactKeys }),

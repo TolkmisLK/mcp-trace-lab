@@ -30,8 +30,8 @@ flowchart LR
    客户端字节块不经转换写入上游服务端。
 2. A copy enters the UTF-8 line observer. Complete lines are classified as JSON-RPC 2.0.  
    字节副本进入 UTF-8 行观察器，完整行按 JSON-RPC 2.0 分类。
-3. Valid messages are recursively redacted before JSONL persistence.  
-   有效消息在写入 JSONL 前递归脱敏。
+3. The recorder applies the selected capture policy before JSONL persistence: `redacted` (default) saves recursively redacted messages, while `metadata` omits the saved message entirely. Classification, correlation, and failure detection use the original parsed message in either mode.
+   记录器在写入 JSONL 前应用采集策略：默认 `redacted` 保存递归脱敏后的消息，`metadata` 完全省略已保存消息。两种模式都使用原始已解析消息完成分类、关联与失败判断。
 4. Requests are indexed by direction, ID type, and ID value. The opposite-direction response closes the pending request and receives method, tool name, and duration metadata.  
    请求按方向、ID 类型和值建立索引；反方向响应结束待处理请求，并继承方法、工具名及耗时元数据。
 5. Server stdout follows the same process in reverse. Server stderr is forwarded to recorder stderr and is not persisted.  

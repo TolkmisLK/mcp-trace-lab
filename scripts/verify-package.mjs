@@ -110,6 +110,48 @@ try {
   }
   const cli = join(installed, "dist", "cli.js");
   assert.match(run(cli, "--help"), /--fail-on-error/);
+  assert.match(run(cli, "--help"), /--capture redacted\|metadata/);
+  const metadataTrace = join(temporary, "metadata.trace.jsonl");
+  const wire = `${JSON.stringify({
+    jsonrpc: "2.0",
+    id: 1,
+    method: "tools/call",
+    params: { name: "echo", arguments: { note: "package-private-payload" } },
+  })}\n`;
+  assert.equal(
+    execFileSync(
+      process.execPath,
+      [
+        cli,
+        "record",
+        "--output",
+        metadataTrace,
+        "--capture",
+        "metadata",
+        "--",
+        process.execPath,
+        "-e",
+        "process.stdin.pipe(process.stdout)",
+      ],
+      { cwd: temporary, input: wire, encoding: "utf8", timeout: 30_000 },
+    ),
+    wire,
+  );
+  const metadataContent = await readFile(metadataTrace, "utf8");
+  assert.doesNotMatch(metadataContent, /package-private-payload/);
+  const metadataEvents = metadataContent
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  assert.equal(metadataEvents.length, 2);
+  for (const event of metadataEvents) {
+    assert.equal(event.capturePolicy, "metadata");
+    assert.equal(Object.hasOwn(event, "message"), false);
+  }
+  assert.equal(
+    JSON.parse(run(cli, "inspect", "--format", "json", metadataTrace)).events,
+    2,
+  );
   run(join(installed, "examples", "run-demo.mjs"));
   const traces = await readdir(join(installed, "traces"));
   assert.equal(traces.length, 1);

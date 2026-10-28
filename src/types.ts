@@ -4,6 +4,7 @@ export type Direction = "client_to_server" | "server_to_client";
 export type MessageKind = "request" | "notification" | "response" | "invalid";
 export type ResponseStatus = "ok" | "error";
 export type JsonRpcId = string | number | null;
+export type CapturePolicy = "redacted" | "metadata";
 
 export interface TraceEvent {
   schemaVersion: typeof TRACE_SCHEMA_VERSION;
@@ -19,6 +20,7 @@ export interface TraceEvent {
   responseStatus?: ResponseStatus;
   durationMs?: number;
   toolError?: boolean;
+  capturePolicy?: CapturePolicy;
   message?: unknown;
   parseError?: string;
   contentSha256?: string;

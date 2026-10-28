@@ -9,11 +9,16 @@ import { redactValue } from "./redaction.js";
 import { resultIsError } from "./tool-error.js";
 import {
   TRACE_SCHEMA_VERSION,
+  type CapturePolicy,
   type Direction,
   type PendingRequest,
   type RedactionOptions,
   type TraceEvent,
 } from "./types.js";
+
+export interface RecorderOptions extends RedactionOptions {
+  capturePolicy?: CapturePolicy;
+}
 
 function opposite(direction: Direction): Direction {
   return direction === "client_to_server"
@@ -24,27 +29,37 @@ function opposite(direction: Direction): Direction {
 export class TraceRecorder {
   readonly #pending = new Map<string, PendingRequest>();
   readonly #redaction: RedactionOptions;
+  readonly #capturePolicy: CapturePolicy;
   readonly #stream: WriteStream;
   readonly #sessionId = randomUUID();
   #sequence = 0;
   #closed = false;
 
-  private constructor(stream: WriteStream, redaction: RedactionOptions) {
+  private constructor(
+    stream: WriteStream,
+    options: RecorderOptions,
+    capturePolicy: CapturePolicy,
+  ) {
     this.#stream = stream;
-    this.#redaction = redaction;
+    this.#redaction = options;
+    this.#capturePolicy = capturePolicy;
   }
 
   static async create(
     outputPath: string,
-    redaction: RedactionOptions = {},
+    options: RecorderOptions = {},
   ): Promise<TraceRecorder> {
+    const capturePolicy = options.capturePolicy ?? "redacted";
+    if (capturePolicy !== "redacted" && capturePolicy !== "metadata") {
+      throw new Error("Capture policy must be redacted or metadata");
+    }
     await mkdir(dirname(outputPath), { recursive: true });
     const stream = createWriteStream(outputPath, {
       flags: "a",
       encoding: "utf8",
     });
     await once(stream, "open");
-    return new TraceRecorder(stream, redaction);
+    return new TraceRecorder(stream, options, capturePolicy);
   }
 
   observe(direction: Direction, line: string): boolean {
@@ -68,6 +83,7 @@ export class TraceRecorder {
         direction,
         kind: "invalid",
         byteLength,
+        capturePolicy: this.#capturePolicy,
         parseError:
           "Invalid JSON; payload omitted to avoid persisting unredacted data.",
         contentSha256: hashContent(line),
@@ -84,6 +100,7 @@ export class TraceRecorder {
         direction,
         kind: "invalid",
         byteLength,
+        capturePolicy: this.#capturePolicy,
         parseError: "Unsupported JSON-RPC 2.0 message shape.",
         contentSha256: hashContent(line),
       });
@@ -97,6 +114,7 @@ export class TraceRecorder {
       direction,
       kind: classified.kind,
       byteLength,
+      capturePolicy: this.#capturePolicy,
       ...("id" in classified ? { id: classified.id } : {}),
       ...(classified.method === undefined ? {} : { method: classified.method }),
       ...(classified.toolName === undefined
@@ -105,7 +123,6 @@ export class TraceRecorder {
       ...(classified.responseStatus === undefined
         ? {}
         : { responseStatus: classified.responseStatus }),
-      message: redactValue(parsed, this.#redaction),
     };
 
     if (classified.kind === "request" && classified.id !== undefined) {
@@ -130,7 +147,7 @@ export class TraceRecorder {
       }
     }
 
-    // Preserve the diagnosis even if a custom redaction key removes isError.
+    // Preserve failure diagnostics even when the message payload is omitted or redacted.
     if (
       event.kind === "response" &&
       event.method === "tools/call" &&
@@ -138,6 +155,9 @@ export class TraceRecorder {
       resultIsError(parsed)
     ) {
       event.toolError = true;
+    }
+    if (this.#capturePolicy === "redacted") {
+      event.message = redactValue(parsed, this.#redaction);
     }
     return this.#write(event);
   }

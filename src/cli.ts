@@ -9,21 +9,25 @@ import {
 } from "./inspect.js";
 import { runRecord } from "./record-command.js";
 import { generateHtmlReport } from "./report.js";
+import type { CapturePolicy } from "./types.js";
 
 const HELP = `MCP Trace Lab — local-first MCP stdio recorder / 本地优先的 MCP stdio 记录器
 
 Usage / 用法:
-  mcp-trace record --output <trace.jsonl> [--redact-key <key>] -- <server> [args...]
+  mcp-trace record --output <trace.jsonl> [--capture redacted|metadata] [--redact-key <key>] -- <server> [args...]
   mcp-trace inspect [--format text|json] [--fail-on-error] <trace.jsonl>
   mcp-trace report --output <report.html> <trace.jsonl>
   mcp-trace --help
 
 Examples / 示例:
   mcp-trace record --output traces/demo.trace.jsonl -- node server.js
+  mcp-trace record --output traces/metadata.trace.jsonl --capture metadata -- node server.js
   mcp-trace inspect traces/demo.trace.jsonl
   mcp-trace report --output traces/demo.trace.html traces/demo.trace.jsonl
 
 Security / 安全:
+  --capture redacted (default) saves redacted messages; metadata omits message payloads.
+  --capture redacted（默认）保存脱敏消息；metadata 省略消息载荷，仍保留 ID、方法和工具名。
   Traces may still contain sensitive application data. Keep them local and review before sharing.
   追踪文件仍可能包含敏感业务数据；请保留在本地，并在分享前进行审查。
 `;
@@ -33,6 +37,7 @@ class CliError extends Error {}
 function parseRecordArguments(arguments_: readonly string[]): {
   output: string;
   redactKeys: string[];
+  capturePolicy: CapturePolicy;
   command: string;
   commandArguments: string[];
 } {
@@ -46,6 +51,7 @@ function parseRecordArguments(arguments_: readonly string[]): {
     options: {
       output: { type: "string", short: "o" },
       "redact-key": { type: "string", multiple: true },
+      capture: { type: "string", default: "redacted" },
     },
     strict: true,
     allowPositionals: false,
@@ -59,10 +65,17 @@ function parseRecordArguments(arguments_: readonly string[]): {
   if (commandArguments.length === 0 || commandArguments[0] === undefined) {
     throw new CliError("Missing server command after -- / -- 后缺少服务端命令");
   }
+  const capturePolicy = parsed.values.capture;
+  if (capturePolicy !== "redacted" && capturePolicy !== "metadata") {
+    throw new CliError(
+      "--capture must be redacted or metadata / --capture 必须是 redacted 或 metadata",
+    );
+  }
 
   return {
     output: parsed.values.output,
     redactKeys: parsed.values["redact-key"] ?? [],
+    capturePolicy,
     command: commandArguments[0],
     commandArguments: commandArguments.slice(1),
   };
