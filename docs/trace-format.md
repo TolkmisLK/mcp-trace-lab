@@ -20,6 +20,7 @@ Trace files use UTF-8 JSON Lines. Each line is an independent event; multiple re
 | `toolName`       | string, optional        | `params.name` for `tools/call`; copied to its response / `tools/call` 的 `params.name`，并复制到响应 |
 | `responseStatus` | enum, optional          | `ok` or `error` / 成功或错误                                                                         |
 | `durationMs`     | number, optional        | Monotonic request-to-response duration / 单调时钟测得的请求响应耗时                                  |
+| `capturePolicy`  | enum, optional          | `redacted` or `metadata`; policy for this event / `redacted` 或 `metadata`，本事件采用的采集策略     |
 | `message`        | JSON, optional          | Parsed message after redaction / 脱敏后的已解析消息                                                  |
 | `parseError`     | string, optional        | Why an event is invalid / 事件无效原因                                                               |
 | `contentSha256`  | string, optional        | Fingerprint for an invalid raw line / 无效原始行指纹                                                 |
@@ -53,6 +54,16 @@ Trace files use UTF-8 JSON Lines. Each line is an independent event; multiple re
 - Additive optional fields do not change the major schema version. / 新增可选字段不提升主版本。
 - Removing or redefining a field requires a major schema version change. / 删除或重新定义字段必须提升主版本。
 - Invalid protocol payloads are fingerprinted but never stored verbatim. / 无效协议载荷仅保留指纹，不保存原文。
+
+## Payload capture / 载荷采集
+
+New events include `capturePolicy`, including invalid protocol events. `redacted` is the default and preserves the existing redacted `message` behavior. With `metadata`, `message` is absent for every event; parsed request arguments, results, error details, notification data, and extra message fields are not persisted. The recorder still classifies and correlates the original message and computes `toolError` before omitting the payload. Protocol forwarding is unchanged.
+
+新事件均包含 `capturePolicy`，包括无效协议事件。默认 `redacted` 沿用已有的脱敏 `message` 行为。`metadata` 下所有事件均不含 `message`；已解析的请求参数、结果、错误详情、通知数据和额外消息字段都不落盘。记录器仍根据原消息分类和配对，在省略载荷前计算 `toolError`，协议转发不变。
+
+This optional field keeps schema version `1.0`. Old events without the field remain readable; a missing `message` in an old event does not establish its capture policy. Policies may differ across sessions appended to the same file, so readers must use each event's field. Metadata retains IDs, names, timestamps, lengths and invalid-line fingerprints and may still be sensitive.
+
+该可选字段不改变 `1.0` 契约版本。没有该字段的旧事件仍可读取；旧事件缺少 `message` 时不能据此推断采集策略。同一文件追加的会话可使用不同策略，读取器应逐事件判断。元数据保留 ID、名称、时间戳、长度及无效行指纹，仍可能敏感。
 
 ## 工具执行失败 / Tool execution failure
 

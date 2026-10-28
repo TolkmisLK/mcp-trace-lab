@@ -8,6 +8,8 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ### Added / 新增
 
+- `record --capture redacted|metadata` with backward-compatible redacted capture by default. Metadata mode omits saved payloads while retaining correlation, timings, and failure diagnostics; HTML details identify intentionally omitted payloads.
+  新增 `record --capture redacted|metadata`，默认兼容原脱敏采集。元数据模式省略已保存载荷，保留配对、耗时及失败诊断，HTML 详情明确标识未采集正文。
 - Transparent MCP stdio proxy with bidirectional backpressure.  
   支持双向背压的透明 MCP stdio 代理。
 - Redacted JSONL trace recording with per-session identity.  

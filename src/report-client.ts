@@ -17,6 +17,7 @@ export function reportClient(): void {
       toolError?: boolean;
       durationMs?: number;
       parseError?: string;
+      capturePolicy?: string;
       message?: unknown;
     };
   };
@@ -214,6 +215,7 @@ export function reportClient(): void {
         event?.durationMs === undefined ? undefined : `${event.durationMs} ms`,
       ],
       ["解析错误 / Parse error", event?.parseError],
+      ["载荷采集 / Payload capture", event?.capturePolicy],
     ];
     for (const [name, value] of entries) {
       if (value === undefined) continue;
@@ -227,7 +229,9 @@ export function reportClient(): void {
     }
     element("payload").textContent =
       event?.message === undefined
-        ? "无已保存消息 / No saved message"
+        ? event?.capturePolicy === "metadata"
+          ? "仅元数据模式：未采集消息载荷 / Message payload was not captured (metadata mode)"
+          : "无已保存消息 / No saved message"
         : JSON.stringify(event.message, null, 2);
     detail.scrollIntoView({ block: "nearest" });
   }

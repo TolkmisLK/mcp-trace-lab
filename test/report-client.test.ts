@@ -155,6 +155,7 @@ describe("report interactions", () => {
         kind: "request",
         method: "tools/call",
         toolName: "echo",
+        ...(index === 0 ? { capturePolicy: "metadata" } : {}),
       },
     }));
     ids.get("trace-data")!.textContent = JSON.stringify({ rows });
@@ -174,6 +175,22 @@ describe("report interactions", () => {
       assert.equal(
         ids.get("rows")!.children[0]!.children[4]!.textContent,
         "tools/call · echo",
+      );
+      ids.get("rows")!.children[0]!.fire("click");
+      assert.match(ids.get("payload")!.textContent, /未采集消息载荷/);
+      assert.ok(
+        ids
+          .get("meta")!
+          .children.some(
+            (box) =>
+              box.children[0]?.textContent === "载荷采集 / Payload capture" &&
+              box.children[1]?.textContent === "metadata",
+          ),
+      );
+      ids.get("rows")!.children[1]!.fire("click");
+      assert.equal(
+        ids.get("payload")!.textContent,
+        "无已保存消息 / No saved message",
       );
       ids.get("more")!.fire("click");
       assert.equal(ids.get("rows")!.children.length, 201);

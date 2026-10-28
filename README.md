@@ -82,6 +82,31 @@ node dist/cli.js record \
   -- node path/to/server.js
 ```
 
+### Payload capture / 载荷采集
+
+If you only need timing and failure diagnostics, omit message payloads with `--capture metadata`:
+
+如果只需要耗时与失败诊断，可用 `--capture metadata` 省略消息载荷：
+
+```bash
+node dist/cli.js record --output traces/metadata.trace.jsonl --capture metadata -- node path/to/server.js
+```
+
+| Mode / 模式                 | Saved data / 保存内容                                                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `redacted` (default / 默认) | Metadata and recursively redacted messages / 元数据与递归脱敏后的消息                                                                                  |
+| `metadata`                  | Metadata only; no `message` field, request arguments, result content, or error details / 仅元数据；不保存 `message` 字段、请求参数、结果正文或错误详情 |
+
+Both modes preserve raw protocol forwarding, request/response pairing, byte lengths, durations, JSON-RPC status, and tool failure counts. Metadata still includes IDs, method and tool names, timestamps, and invalid-line fingerprints; it is not anonymous or automatically safe to share. Neither mode alters server stderr. The policy applies to new events only: appending metadata events does not remove payloads saved by earlier sessions.
+
+两种模式都保留原始协议转发、请求响应配对、字节数、耗时、协议状态和工具失败统计。元数据仍含 ID、方法名、工具名、时间戳及无效行指纹，不能视为匿名数据或直接公开。两种模式都不改变服务端 stderr。策略只作用于新事件；向已有文件追加元数据记录不会删除旧会话保存的载荷。
+
+Inspect and HTML reports support both modes. A metadata event's report details explicitly say that its payload was not captured. See the [trace format](docs/trace-format.md) for the additive `capturePolicy` field.
+
+分析器与 HTML 报告都支持两种模式；元数据事件的详情会明确提示未采集载荷。新增可选字段 `capturePolicy` 见[追踪格式](docs/trace-format.md)。
+
+### Inspect and report / 分析与报告
+
 Inspect a trace / 分析追踪文件：
 
 ```bash
@@ -120,6 +145,8 @@ The report embeds trace data and all UI resources in one file; it does not load 
   关联请求与响应，统计方法、工具调用、错误和耗时。
 - Recursive key-based redaction with extra keys configurable from the CLI.
   递归按字段名脱敏，并支持通过 CLI 增加自定义敏感字段。
+- Configurable redacted-message or metadata-only capture, without changing protocol forwarding.
+  可选择保存脱敏消息或仅记录元数据，不改变协议转发。
 - Malformed lines: forward unchanged, persist only length and SHA-256.
   无法解析的消息：原样转发，但仅持久化长度和 SHA-256。
 - Text and JSON summaries, plus an offline HTML timeline report.
@@ -182,7 +209,7 @@ The recorder treats stdio payloads as newline-delimited JSON-RPC 2.0 and does no
 ## Roadmap / 路线图
 
 - `v0.1`: stdio recording, redaction, correlation, text/JSON inspection. / stdio 记录、脱敏、请求响应关联，以及文本和 JSON 分析。
-- `v0.2`: configurable payload capture policies. / 计划增加可配置的载荷采集策略。
+- `v0.2` (unreleased / 尚未发布): configurable `redacted` and `metadata` payload capture policies. / 可配置 `redacted` 与 `metadata` 载荷采集策略。
 - Later / 后续: Streamable HTTP support only after the stdio behavior is stable.
 
 ## License / 许可证
